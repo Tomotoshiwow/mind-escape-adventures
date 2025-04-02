@@ -4,53 +4,44 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { UserProfile, MindfulnessPrompt } from '@/types';
-import { ArrowRight, Brain, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { UserProfile } from '@/types';
+import { ArrowRight, Brain, Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { generateMindfulnessPrompt } from '@/utils/mindfulnessApi';
+import { toast } from "sonner";
 
 interface MindfulnessPromptProps {
   userProfile: UserProfile;
   onComplete: () => void;
 }
 
-// サンプルのマインドフルネスプロンプト
-const samplePrompts: MindfulnessPrompt[] = [
-  {
-    id: 'eastern-1',
-    type: 'eastern',
-    content: `今この瞬間、あなたの心が何かに捕らわれているようですね。まずは深呼吸をしてみましょう。息を鼻から吸って、口からゆっくりと吐き出す。この呼吸の間に、あなたの足の裏が地面に触れている感覚に注目してみてください。この接点があなたを現実に繋ぎとめています。
-    
-思考は川の流れのようなもの。それらを止めようとするのではなく、川岸に座ってそれらを観察してみましょう。「ああ、また心配の思考が流れてきたな」と。思考を捕まえようとせず、ただ流れに気づくだけでいいのです。
-
-今この場所で、あなたが見える色を5つ、聞こえる音を4つ、触れるテクスチャーを3つ、嗅げる香りを2つ、そして口の中の味を1つ意識してみてください。これが今、この瞬間のあなたの現実です。過去でも未来でもなく、ただここにある現在です。`
-  },
-  {
-    id: 'western-1',
-    type: 'western',
-    content: `あなたが今経験しているネガティブな思考は、脳が危険から私たちを守ろうとする自然な反応です。しかしその思考に対して「そうかもしれないけれど、必ずしもそうとは限らない」と少し距離を置いてみましょう。
-
-認知行動療法では、このような思考を「認知の歪み」と呼びます。例えば「すべて悪い方向に進む」と考えるのは「破滅的思考」、「自分だけがダメだ」と思うのは「自己批判」という歪みです。
-
-今から3分間、あなたの不安な思考を紙に書き出してみましょう。それから、友人がこの悩みを抱えていたらどんなアドバイスをするか考えてみてください。自分自身にも同じ思いやりを向けることができますよ。
-
-最後に、今この瞬間、あなたができる小さな行動に焦点を当ててみましょう。それが肩の力を抜くことでも、水を一杯飲むことでも構いません。小さな行動が次の一歩につながります。`
-  }
-];
-
 const MindfulnessPromptComponent: React.FC<MindfulnessPromptProps> = ({ userProfile, onComplete }) => {
   const [step, setStep] = useState(1);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [situation, setSituation] = useState('');
   const [thoughts, setThoughts] = useState('');
-  const [currentPrompt, setCurrentPrompt] = useState<MindfulnessPrompt | null>(null);
+  const [mindfulnessContent, setMindfulnessContent] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // 次のステップへ進む
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1 && (situation || userProfile.negativeThoughts)) {
-      // 実際のアプリではここでAPIリクエストを行い、適切なプロンプトを取得します
-      // 今回はサンプルデータからランダムに選択
-      const randomIndex = Math.floor(Math.random() * samplePrompts.length);
-      setCurrentPrompt(samplePrompts[randomIndex]);
-      setStep(2);
+      setIsLoading(true);
+      
+      try {
+        // APIを使ってマインドフルネスプロンプトを生成
+        const prompt = await generateMindfulnessPrompt(
+          userProfile, 
+          situation + "\n" + thoughts
+        );
+        
+        setMindfulnessContent(prompt);
+        setStep(2);
+      } catch (error) {
+        console.error("Error generating mindfulness prompt:", error);
+        toast.error("マインドフルネスの生成に失敗しました");
+      } finally {
+        setIsLoading(false);
+      }
     } else if (step === 2) {
       onComplete();
     }
@@ -116,10 +107,19 @@ const MindfulnessPromptComponent: React.FC<MindfulnessPromptProps> = ({ userProf
             <Button
               className="w-full btn-gradient mt-4"
               onClick={handleNext}
-              disabled={!situation && !userProfile.negativeThoughts}
+              disabled={(!situation && !userProfile.negativeThoughts) || isLoading}
             >
-              <span>次へ進む</span>
-              <ArrowRight className="ml-2" size={16} />
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <span>次へ進む</span>
+                  <ArrowRight className="ml-2" size={16} />
+                </>
+              )}
             </Button>
           </div>
         ) : (
@@ -131,19 +131,11 @@ const MindfulnessPromptComponent: React.FC<MindfulnessPromptProps> = ({ userProf
               </h2>
             </div>
             
-            {currentPrompt && (
-              <div className="bg-white/70 p-4 rounded-lg shadow-sm border border-purple-100">
-                <div className="prose text-sm whitespace-pre-line">
-                  {currentPrompt.content}
-                </div>
-                
-                <div className="mt-4 text-xs text-gray-500 italic">
-                  {currentPrompt.type === 'eastern' ? 
-                    '- 東洋の知恵からのアプローチ' : 
-                    '- 認知行動療法のアプローチ'}
-                </div>
+            <div className="bg-white/70 p-4 rounded-lg shadow-sm border border-purple-100">
+              <div className="prose text-sm whitespace-pre-line">
+                {mindfulnessContent}
               </div>
-            )}
+            </div>
             
             <div className="mt-4 space-y-2">
               <Button
