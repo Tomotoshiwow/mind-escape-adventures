@@ -57,40 +57,48 @@ export const generateActivities = async (
     回答はJSON形式で返してください。
   `;
   
-  const response = await fetchGptResponse(prompt);
-  
   try {
-    // JSONを抽出してパースする
-    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
-                      response.match(/\{[\s\S]*\}/);
+    const response = await fetchGptResponse(prompt);
     
-    const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : response;
-    const parsedData = JSON.parse(jsonStr);
-    
-    // パースしたデータを活動リストに変換
-    let activities: Activity[] = [];
-    
-    if (Array.isArray(parsedData)) {
-      activities = parsedData.map(transformToActivity);
-    } else if (parsedData.activities && Array.isArray(parsedData.activities)) {
-      activities = parsedData.activities.map(transformToActivity);
-    } else if (parsedData.type1 && Array.isArray(parsedData.type1)) {
-      activities = [
-        ...parsedData.type1.map(transformToActivity),
-        ...parsedData.type2.map(transformToActivity)
-      ];
-    } else {
-      // 何らかの構造で返ってきた場合、キーを検索してActivityに変換
-      activities = Object.values(parsedData)
-        .filter(value => typeof value === 'object' && value !== null)
-        .map(transformToActivity);
+    try {
+      // JSONを抽出してパースする
+      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
+                        response.match(/\{[\s\S]*\}/);
+      
+      const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : response;
+      const parsedData = JSON.parse(jsonStr);
+      
+      // パースしたデータを活動リストに変換
+      let activities: Activity[] = [];
+      
+      if (Array.isArray(parsedData)) {
+        activities = parsedData.map(transformToActivity);
+      } else if (parsedData.activities && Array.isArray(parsedData.activities)) {
+        activities = parsedData.activities.map(transformToActivity);
+      } else if (parsedData.type1 && Array.isArray(parsedData.type1)) {
+        activities = [
+          ...parsedData.type1.map(transformToActivity),
+          ...parsedData.type2.map(transformToActivity)
+        ];
+      } else {
+        // 何らかの構造で返ってきた場合、キーを検索してActivityに変換
+        activities = Object.values(parsedData)
+          .filter(value => typeof value === 'object' && value !== null)
+          .map(transformToActivity);
+      }
+      
+      if (activities.length > 0) {
+        return activities;
+      }
+      throw new Error("No valid activities found in response");
+    } catch (parseError) {
+      console.error("Failed to parse activities:", parseError, response);
+      throw parseError; // 下のcatchブロックでハンドリングするために再スロー
     }
-    
-    return activities;
   } catch (error) {
-    console.error("Failed to parse activities:", error, response);
+    console.error("Error generating activities:", error);
     
-    // エラー時はフォールバックで3つのサンプルアクティビティを返す
+    // エラー時はフォールバックで6つのサンプルアクティビティを返す
     return [
       {
         id: `fallback-1-${Date.now()}`,
@@ -133,6 +141,48 @@ export const generateActivities = async (
         location: "神奈川県",
         bookingLink: "https://www.google.com/search?q=東京+近郊+ナイトカヤック",
         mapLink: "https://maps.google.com/?q=神奈川県+ナイトカヤック"
+      },
+      {
+        id: `fallback-4-${Date.now()}`,
+        title: "古民家でのヨガ体験",
+        description: "歴史ある古民家で行うヨガ。伝統的な空間で心と体を整えます。",
+        personalizedMessage: "静かな空間で心を落ち着かせましょう",
+        imageUrl: getRandomImage(),
+        category: "ヨガ・瞑想",
+        duration: "1時間",
+        price: "2,500円",
+        schedule: "平日朝・週末",
+        location: "世田谷区",
+        bookingLink: "https://www.google.com/search?q=東京+古民家+ヨガ",
+        discount: "初回体験500円オフ"
+      },
+      {
+        id: `fallback-5-${Date.now()}`,
+        title: "ガラス工芸体験",
+        description: "溶けたガラスから美しい作品を作る体験。初めての方も安心のレクチャー付き。",
+        personalizedMessage: "創作の喜びを味わえる新しい体験",
+        imageUrl: getRandomImage(),
+        category: "クラフト",
+        duration: "2時間",
+        price: "5,000円",
+        schedule: "週末のみ",
+        location: "江東区",
+        bookingLink: "https://www.google.com/search?q=東京+ガラス工芸+体験",
+        discount: "記念日の方にプレゼント付き"
+      },
+      {
+        id: `fallback-6-${Date.now()}`,
+        title: "森林セラピーウォーク",
+        description: "専門ガイドと共に森を散策し、自然の癒し効果を体験するツアー。",
+        personalizedMessage: "自然の中でリフレッシュする時間を",
+        imageUrl: getRandomImage(),
+        category: "アウトドア",
+        duration: "半日",
+        price: "3,500円",
+        schedule: "週末午前",
+        location: "高尾",
+        bookingLink: "https://www.google.com/search?q=東京+高尾+森林セラピー",
+        mapLink: "https://maps.google.com/?q=高尾+森林セラピー"
       }
     ];
   }
