@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { UserProfile } from '@/types';
-import { ArrowRight, Brain, Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ArrowRight, Brain, Sparkles, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-react';
 import { generateMindfulnessPrompt } from '@/utils/mindfulnessApi';
 import { toast } from "sonner";
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface MindfulnessPromptProps {
   userProfile: UserProfile;
@@ -21,11 +22,13 @@ const MindfulnessPromptComponent: React.FC<MindfulnessPromptProps> = ({ userProf
   const [thoughts, setThoughts] = useState('');
   const [mindfulnessContent, setMindfulnessContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // 次のステップへ進む
   const handleNext = async () => {
     if (step === 1 && (situation || userProfile.negativeThoughts)) {
       setIsLoading(true);
+      setHasError(false);
       
       try {
         // APIを使ってマインドフルネスプロンプトを生成
@@ -39,12 +42,18 @@ const MindfulnessPromptComponent: React.FC<MindfulnessPromptProps> = ({ userProf
       } catch (error) {
         console.error("Error generating mindfulness prompt:", error);
         toast.error("マインドフルネスの生成に失敗しました");
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
     } else if (step === 2) {
       onComplete();
     }
+  };
+
+  const handleRetry = () => {
+    setHasError(false);
+    handleNext();
   };
 
   return (
@@ -131,11 +140,30 @@ const MindfulnessPromptComponent: React.FC<MindfulnessPromptProps> = ({ userProf
               </h2>
             </div>
             
-            <div className="bg-white/70 p-4 rounded-lg shadow-sm border border-purple-100">
-              <div className="prose text-sm whitespace-pre-line">
-                {mindfulnessContent}
+            {hasError ? (
+              <div className="space-y-4">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>接続エラー</AlertTitle>
+                  <AlertDescription>
+                    サーバーに接続できませんでした。ネットワーク接続を確認してください。
+                  </AlertDescription>
+                </Alert>
+                <Button
+                  className="w-full"
+                  onClick={handleRetry}
+                  variant="outline"
+                >
+                  再試行
+                </Button>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white/70 p-4 rounded-lg shadow-sm border border-purple-100">
+                <div className="prose text-sm whitespace-pre-line">
+                  {mindfulnessContent}
+                </div>
+              </div>
+            )}
             
             <div className="mt-4 space-y-2">
               <Button
