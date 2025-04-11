@@ -1,4 +1,3 @@
-
 import { fetchGptResponse } from "@/services/apiService";
 import { Activity, UserProfile } from "@/types";
 import { sampleImages } from "./sampleImages";

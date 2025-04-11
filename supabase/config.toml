@@ -1,5 +1,2 @@
 
 project_id = "fprazmjkekhiyusqifwj"
-
-[functions.chatgpt]
-verify_jwt = false
