@@ -1,31 +1,27 @@
 
 import { toast } from "sonner";
-
-const API_URL = "https://api.openai.com/v1/chat/completions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const fetchGptResponse = async (prompt: string): Promise<string> => {
-try {
-const response = await fetch(API_URL, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}` // 環境変数に入れる
-},
-body: JSON.stringify({
-model: "gpt-3.5-turbo",
-messages: [{ role: "user", content: prompt }]
-})
-});
+  try {
+    // Supabase Edge Functionを使用してOpenAI APIを呼び出す
+    const { data, error } = await supabase.functions.invoke('chatgpt', {
+      body: { prompt }
+    });
 
-if (!response.ok) {
-throw new Error(`API request failed with status ${response.status}`);
-}
+    if (error) {
+      console.error("Edge Function error:", error);
+      throw new Error(`Edge Function error: ${error.message}`);
+    }
 
-const data = await response.json();
-return data.choices?.[0]?.message?.content || "回答が取得できませんでした。";
-} catch (error) {
-console.error("API request error:", error);
-return "エラーが発生しました。時間をおいてお試しください。";
-}
+    if (!data || !data.content) {
+      throw new Error("応答データが正常ではありません");
+    }
+
+    return data.content;
+  } catch (error) {
+    console.error("API request error:", error);
+    toast.error("サーバー接続エラー: 時間をおいてお試しください");
+    return "エラーが発生しました。時間をおいてお試しください。";
+  }
 };
-

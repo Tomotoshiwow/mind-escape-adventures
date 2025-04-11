@@ -21,15 +21,15 @@ const Home = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button asChild className="btn-gradient text-lg py-6 px-8">
-              <Link to="/activities">
-                <Compass className="mr-2" size={20} />
-                アクティビティを探す
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="bg-white/80 backdrop-blur-sm text-lg py-6 px-8">
               <Link to="/mindfulness">
                 <Brain className="mr-2" size={20} />
                 マインドフルネスを試す
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="bg-white/80 backdrop-blur-sm text-lg py-6 px-8">
+              <Link to="/activities">
+                <Compass className="mr-2" size={20} />
+                アクティビティを探す
               </Link>
             </Button>
           </div>
@@ -57,21 +57,21 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <Sparkles className="text-purple-600" size={24} />
+                <Brain className="text-purple-600" size={24} />
               </div>
-              <h3 className="text-lg font-semibold mb-2">新鮮な体験</h3>
+              <h3 className="text-lg font-semibold mb-2">心の平穏</h3>
               <p className="text-gray-600">
-                あなたが思いつかないような新しいアクティビティとの出会いを提供します。
+                マインドフルネスの実践で、心の平穏を取り戻し、ネガティブな思考から解放されます。
               </p>
             </div>
             
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <Brain className="text-blue-600" size={24} />
+                <Sparkles className="text-blue-600" size={24} />
               </div>
-              <h3 className="text-lg font-semibold mb-2">思考からの解放</h3>
+              <h3 className="text-lg font-semibold mb-2">新鮮な体験</h3>
               <p className="text-gray-600">
-                ネガティブな思考から離れるための心理的アプローチを組み合わせています。
+                あなたが思いつかないような新しいアクティビティとの出会いを提供します。
               </p>
             </div>
             
@@ -112,12 +112,20 @@ const Home = () => {
             ネガティブな思考の循環から抜け出し、新たな可能性を発見する旅へ
           </p>
           
-          <Button asChild className="bg-white text-purple-600 hover:bg-gray-100 text-lg py-6 px-8">
-            <Link to="/activities">
-              始めてみる
-              <ArrowRight className="ml-2" size={20} />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild className="bg-white text-purple-600 hover:bg-gray-100 text-lg py-6 px-8">
+              <Link to="/mindfulness">
+                マインドフルネスを始める
+                <ArrowRight className="ml-2" size={20} />
+              </Link>
+            </Button>
+            <Button asChild className="bg-transparent border border-white text-white hover:bg-white/10 text-lg py-6 px-8">
+              <Link to="/activities">
+                アクティビティを探す
+                <ArrowRight className="ml-2" size={20} />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
     </div>
