@@ -10,8 +10,8 @@ import BridgeStory from '@/components/BridgeStory';
 import MindfulnessPrompt from '@/components/MindfulnessPrompt';
 import Onboarding from '@/components/Onboarding';
 import { UserProfile, Activity } from '@/types';
-import { generateActivities } from '@/utils/activityApi';
-import { RefreshCcw, Loader2 } from 'lucide-react';
+import { generateSampleActivities } from '@/utils/activities';
+import { RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Activities = () => {
@@ -23,18 +23,11 @@ const Activities = () => {
   const [showBridgeStory, setShowBridgeStory] = useState(false);
   const [activeTab, setActiveTab] = useState('discover');
   const [cycle, setCycle] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // 過去のサイクルのフィードバック情報
-  const [likedActivities, setLikedActivities] = useState<string[]>([]);
-  const [dislikedActivities, setDislikedActivities] = useState<string[]>([]);
 
   // ローカルストレージからユーザープロフィールを取得
   useEffect(() => {
     const savedProfile = localStorage.getItem('userProfile');
     const savedFavorites = localStorage.getItem('favorites');
-    const savedLiked = localStorage.getItem('likedActivities');
-    const savedDisliked = localStorage.getItem('dislikedActivities');
     
     if (savedProfile) {
       setUserProfile(JSON.parse(savedProfile));
@@ -43,40 +36,15 @@ const Activities = () => {
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
-    
-    if (savedLiked) {
-      setLikedActivities(JSON.parse(savedLiked));
-    }
-    
-    if (savedDisliked) {
-      setDislikedActivities(JSON.parse(savedDisliked));
-    }
   }, []);
 
   // アクティビティを生成
   useEffect(() => {
-    const loadActivities = async () => {
-      if (userProfile) {
-        setIsLoading(true);
-        try {
-          // APIからアクティビティを取得
-          const newActivities = await generateActivities(
-            userProfile, 
-            cycle,
-            likedActivities,
-            dislikedActivities
-          );
-          setActivities(newActivities);
-        } catch (error) {
-          console.error("Error loading activities:", error);
-          toast.error("アクティビティの読み込みに失敗しました");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    loadActivities();
+    if (userProfile) {
+      // 本来はAPIリクエストを行いますが、ここではサンプルデータを使用
+      const newActivities = generateSampleActivities(`user-${Date.now()}`);
+      setActivities(newActivities);
+    }
   }, [userProfile, cycle]);
 
   // プロフィール設定完了時の処理
@@ -100,8 +68,6 @@ const Activities = () => {
   // お気に入り追加処理
   const handleLike = (activity: Activity) => {
     const liked = { ...activity, isFavorite: true };
-    
-    // お気に入りに追加
     setFavorites(prev => {
       // 重複チェック
       if (!prev.some(fav => fav.id === liked.id)) {
@@ -111,23 +77,11 @@ const Activities = () => {
       }
       return prev;
     });
-    
-    // 好きなアクティビティとして記録（次のサイクルの参考に）
-    setLikedActivities(prev => {
-      const updated = [...prev, activity.title];
-      localStorage.setItem('likedActivities', JSON.stringify(updated));
-      return updated;
-    });
   };
 
   // スキップ処理
   const handleDislike = (activity: Activity) => {
-    // スキップしたアクティビティを記録（次のサイクルの参考に）
-    setDislikedActivities(prev => {
-      const updated = [...prev, activity.title];
-      localStorage.setItem('dislikedActivities', JSON.stringify(updated));
-      return updated;
-    });
+    // 必要に応じてスキップしたアクティビティを記録
   };
 
   // お気に入り削除処理
@@ -183,12 +137,8 @@ const Activities = () => {
             <Button variant="outline" size="sm" onClick={handleBackToMindfulness}>
               マインドフルネスに戻る
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <RefreshCcw size={16} className="mr-1" />
-              )}
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCcw size={16} className="mr-1" />
               リフレッシュ
             </Button>
           </div>
@@ -201,19 +151,12 @@ const Activities = () => {
           </TabsList>
           
           <TabsContent value="discover" className="min-h-[70vh]">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center h-[60vh]">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-gray-600">あなたにぴったりのアクティビティを探しています...</p>
-              </div>
-            ) : (
-              <ActivitySwiper 
-                activities={activities}
-                onLike={handleLike}
-                onDislike={handleDislike}
-                onEmpty={handleEmpty}
-              />
-            )}
+            <ActivitySwiper 
+              activities={activities}
+              onLike={handleLike}
+              onDislike={handleDislike}
+              onEmpty={handleEmpty}
+            />
           </TabsContent>
           
           <TabsContent value="favorites">

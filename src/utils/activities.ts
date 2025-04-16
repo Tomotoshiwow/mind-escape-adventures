@@ -1,16 +1,5 @@
 
-import { Activity, UserProfile } from '../types';
-
-// ローカルストレージからプロフィールを取得する関数
-export const getProfileFromStorage = (): UserProfile | null => {
-  try {
-    const storedProfile = localStorage.getItem('userProfile');
-    return storedProfile ? JSON.parse(storedProfile) : null;
-  } catch (error) {
-    console.error('Error retrieving profile from storage:', error);
-    return null;
-  }
-};
+import { Activity } from '../types';
 
 // サンプルアクティビティデータを生成する関数
 export const generateSampleActivities = (userId: string): Activity[] => {
